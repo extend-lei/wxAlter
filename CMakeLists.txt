@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_TOOLCHAIN_FILE D:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake)
 set(VCPKG_TARGET_TRIPLET x64-windows-static)
@@ -37,8 +37,14 @@ set(RESOURCES
 add_executable(wxdemo1 WIN32 main.cpp ${RESOURCES}
         MainFrame.cpp
         MainFrame.h
-        BackThread.cpp
-        BackThread.h
+        AlterThread.cpp
+        AlterThread.h
+        StashThread.h
+        StashThread.cpp
+        WinTool.cpp
+        WinTool.h
+        ItemFliter.cpp
+        ItemFliter.h
 )
 
 # 链接 wxWidgets 库

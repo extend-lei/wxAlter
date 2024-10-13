@@ -6,11 +6,12 @@
 #include <wx/tokenzr.h>
 
 MainFrame::MainFrame(): wxFrame(nullptr, wxID_ANY, "wxAlter") {
+
     panel = new wxPanel(this);
     panel->SetFont(wxFont(12, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("微软雅黑")));
     wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
     titleText = new wxStaticText(panel, wxID_ANY, "改造工具:Alt+Q启动");
-    mainSizer->Add(titleText, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
+    mainSizer->Add(titleText, wxSizerFlags().CenterHorizontal());
 
 
     wxBoxSizer *bSizer2 = new wxBoxSizer(wxHORIZONTAL);
@@ -19,29 +20,33 @@ MainFrame::MainFrame(): wxFrame(nullptr, wxID_ANY, "wxAlter") {
     bSizer2->Add(0, 0, 1, wxEXPAND, 5);
 
     wxStaticText *m_staticText2 = new wxStaticText(panel, wxID_ANY, _("预设词条"), wxDefaultPosition, wxDefaultSize, 0);
-    m_staticText2->Wrap(-1);
-    bSizer2->Add(m_staticText2, 0, wxALL, 5);
+    bSizer2->Add(m_staticText2, wxSizerFlags());
+    bSizer2->AddSpacer(15);
 
     wxArrayString m_choice1Choices{"幽魂之甲", "巨人魔盾", "巫妖之冠", "咒士手套", "咒士之靴", "玛瑙护身符"};
     m_choice1 = new wxChoice(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice1Choices, 0);
     m_choice1->SetSelection(0);
     m_choice1->Bind(wxEVT_CHOICE, &MainFrame::OnChoiceSelected, this);
-    bSizer2->Add(m_choice1, 0, wxALL, 5);
+    bSizer2->Add(m_choice1, wxSizerFlags().Proportion(1));
     bSizer2->Add(0, 0, 1, wxEXPAND, 5);
 
-    mainSizer->Add(bSizer2, 1, wxALIGN_CENTER_HORIZONTAL, 5);
+    mainSizer->Add(bSizer2, wxSizerFlags().Expand());
 
     modInput = new wxTextCtrl(panel, wxID_ANY,
                               "请输入词条",
-                              wxDefaultPosition, wxSize(600, 300),
+                              wxDefaultPosition, wxDefaultSize,
                               wxTE_MULTILINE);
-    mainSizer->Add(modInput, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
-    mainSizer->Add(0, 0, 1, wxEXPAND, 5);
+    mainSizer->Add(modInput, wxSizerFlags().Proportion(1).Expand());
+    mainSizer->AddSpacer(25);
 
-    panel->SetSizer(mainSizer);
+    wxGridSizer *boardSizer = new wxGridSizer(1);
+    boardSizer->Add(mainSizer,wxSizerFlags().Border(wxALL,50).Expand());
+
+    panel->SetSizer(boardSizer);
     panel->Layout();
 
     wxWindow::RegisterHotKey(1001, wxMOD_ALT, 'Q');
+    wxWindow::RegisterHotKey(1002, wxMOD_NONE, VK_OEM_6); //"]"
     Bind(wxEVT_HOTKEY, &MainFrame::OnHotKey, this);
 }
 
@@ -64,24 +69,57 @@ void SimulateKeyPress(char key) {
 }
 
 void MainFrame::OnHotKey(wxKeyEvent &evt) {
-    if (workerThread && workerThread->IsRunning()) {
-        //    wxLogMessage("Stopping task...");
-        workerThread->Stop();
-        workerThread->Wait();
-        delete workerThread;
-        workerThread = nullptr;
-    } else {
-        //   wxLogMessage("Starting task...");
-        workerThread = new BackThread();
-        wxString text = modInput->GetValue();
-        wxStringTokenizer tokenizer(text, "\n");
-        while (tokenizer.HasMoreTokens()) {
-            workerThread->desc_mods.push_back(tokenizer.GetNextToken());
+    int key = evt.GetKeyCode();
+    wxString text = modInput->GetValue();
+    wxStringTokenizer tokenizer(text, "\n");
+
+    if (key == ']') {
+        if (stashThread && stashThread->IsRunning()) {
+            //    wxLogMessage("Stopping task...");
+            stashThread->Stop();
+            stashThread->Wait();
+            delete stashThread;
+            stashThread = nullptr;
+        } else {
+            //   wxLogMessage("Starting task...");
+            stashThread = new StashThread();
+            wxString text = modInput->GetValue();
+            wxStringTokenizer tokenizer(text, "\n");
+            while (tokenizer.HasMoreTokens()) {
+                stashThread->desc_mods.push_back(tokenizer.GetNextToken());
+            }
+            if (stashThread->Run() != wxTHREAD_NO_ERROR) {
+                wxLogError("Failed to start thread!");
+                delete stashThread;
+                stashThread = nullptr;
+            }
         }
-        if (workerThread->Run() != wxTHREAD_NO_ERROR) {
-            wxLogError("Failed to start thread!");
+        return;
+    }
+
+    if(text=="请输入词条") {
+        wxMessageBox("请先输入词条再启动！！");
+        return;
+    }
+    if (key == 'Q') {
+        if (workerThread && workerThread->IsRunning()) {
+            //    wxLogMessage("Stopping task...");
+            workerThread->Stop();
+            workerThread->Wait();
             delete workerThread;
             workerThread = nullptr;
+        } else {
+            //   wxLogMessage("Starting task...");
+            workerThread = new AlterThread();
+
+            while (tokenizer.HasMoreTokens()) {
+                workerThread->desc_mods.push_back(tokenizer.GetNextToken());
+            }
+            if (workerThread->Run() != wxTHREAD_NO_ERROR) {
+                wxLogError("Failed to start thread!");
+                delete workerThread;
+                workerThread = nullptr;
+            }
         }
     }
 }

@@ -5,7 +5,8 @@
 #ifndef MAINFRAME_H
 #define MAINFRAME_H
 #include <wx/wx.h>
-#include "BackThread.h"
+#include "AlterThread.h"
+#include "StashThread.h"
 
 class MainFrame:public wxFrame{
 public:
@@ -19,7 +20,8 @@ public:
     wxChoice* m_choice1;
 
 private:
-    BackThread* workerThread = nullptr;
+    AlterThread* workerThread = nullptr;
+    StashThread* stashThread = nullptr;
 };
 
 
