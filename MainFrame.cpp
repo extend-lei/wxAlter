@@ -4,9 +4,11 @@
 
 #include "MainFrame.h"
 #include <wx/tokenzr.h>
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 MainFrame::MainFrame(): wxFrame(nullptr, wxID_ANY, "wxAlter") {
-
     panel = new wxPanel(this);
     panel->SetFont(wxFont(12, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("微软雅黑")));
     wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -40,13 +42,14 @@ MainFrame::MainFrame(): wxFrame(nullptr, wxID_ANY, "wxAlter") {
     mainSizer->AddSpacer(25);
 
     wxGridSizer *boardSizer = new wxGridSizer(1);
-    boardSizer->Add(mainSizer,wxSizerFlags().Border(wxALL,50).Expand());
+    boardSizer->Add(mainSizer, wxSizerFlags().Border(wxALL, 50).Expand());
 
     panel->SetSizer(boardSizer);
     panel->Layout();
 
     wxWindow::RegisterHotKey(1001, wxMOD_ALT, 'Q');
     wxWindow::RegisterHotKey(1002, wxMOD_NONE, VK_OEM_6); //"]"
+    wxWindow::RegisterHotKey(1003, wxMOD_ALT, 'T'); //"]"
     Bind(wxEVT_HOTKEY, &MainFrame::OnHotKey, this);
 }
 
@@ -70,24 +73,14 @@ void SimulateKeyPress(char key) {
 
 void MainFrame::OnHotKey(wxKeyEvent &evt) {
     int key = evt.GetKeyCode();
-    wxString text = modInput->GetValue();
-    wxStringTokenizer tokenizer(text, "\n");
-
     if (key == ']') {
         if (stashThread && stashThread->IsRunning()) {
-            //    wxLogMessage("Stopping task...");
             stashThread->Stop();
             stashThread->Wait();
             delete stashThread;
             stashThread = nullptr;
         } else {
-            //   wxLogMessage("Starting task...");
             stashThread = new StashThread();
-            wxString text = modInput->GetValue();
-            wxStringTokenizer tokenizer(text, "\n");
-            while (tokenizer.HasMoreTokens()) {
-                stashThread->desc_mods.push_back(tokenizer.GetNextToken());
-            }
             if (stashThread->Run() != wxTHREAD_NO_ERROR) {
                 wxLogError("Failed to start thread!");
                 delete stashThread;
@@ -96,8 +89,26 @@ void MainFrame::OnHotKey(wxKeyEvent &evt) {
         }
         return;
     }
+    if (key == 'T') {
+        if (tujinThread && tujinThread->IsRunning()) {
+            tujinThread->Stop();
+            tujinThread->Wait();
+            delete tujinThread;
+            tujinThread = nullptr;
+        } else {
+            tujinThread = new TujinThread();
+            if (tujinThread->Run() != wxTHREAD_NO_ERROR) {
+                wxLogError("Failed to start thread!");
+                delete tujinThread;
+                tujinThread = nullptr;
+            }
+        }
+        return;
+    }
+    wxString text = modInput->GetValue();
+    wxStringTokenizer tokenizer(text, "\n");
 
-    if(text=="请输入词条") {
+    if (text == "请输入词条") {
         wxMessageBox("请先输入词条再启动！！");
         return;
     }
@@ -124,7 +135,7 @@ void MainFrame::OnHotKey(wxKeyEvent &evt) {
     }
 }
 
-void MainFrame::OnChoiceSelected(wxCommandEvent &evt) {
+void MainFrame::OnChoiceSelected(wxCommandEvent &evt)  {
     //{"幽魂之甲", "巨人魔盾", "巫妖之冠", "咒士手套", "咒士之靴", "玛瑙护身符"};
     wxString choice_str = evt.GetString();
     if (choice_str == "幽魂之甲") {

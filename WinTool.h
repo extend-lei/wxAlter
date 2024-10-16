@@ -10,6 +10,9 @@
 #include <comdef.h>
 #include <string>
 
+/**
+ * 提供winapi级别的抽象，主要是发送按键，移动鼠标等操作，不写死poe里的坐标
+ */
 class WinTool {
 public:
     static void SendCtrlAltC() {
@@ -104,11 +107,7 @@ public:
     }
 
 
-
-
-
-    static wxString GetClipboardText()
-    {
+    static wxString GetClipboardText() {
         if (!OpenClipboard(nullptr)) {
             return "";
         }
@@ -119,9 +118,9 @@ public:
         if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
             HANDLE hData = GetClipboardData(CF_UNICODETEXT);
             if (hData) {
-                wchar_t* pText = static_cast<wchar_t*>(GlobalLock(hData));
+                wchar_t *pText = static_cast<wchar_t *>(GlobalLock(hData));
                 if (pText) {
-                    wxStr=wxString(pText, wxMBConvUTF8());
+                    wxStr = wxString(pText, wxMBConvUTF8());
                     GlobalUnlock(hData);
                 }
             }
@@ -132,6 +131,16 @@ public:
         return wxStr;
     }
 
+
+    static void SendCtrlPlusChar(char c);
+
+    static int wxStringToInt(const wxString &str);
+
+    static void SendIntAsKeystrokes(int num);
+
+    static void ClickPos(int x, int y);
+
+    static void SendBackspace();
 };
 
 

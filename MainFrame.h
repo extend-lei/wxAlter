@@ -7,7 +7,7 @@
 #include <wx/wx.h>
 #include "AlterThread.h"
 #include "StashThread.h"
-
+#include "TujinThread.h"
 class MainFrame:public wxFrame{
 public:
     MainFrame();
@@ -22,6 +22,7 @@ public:
 private:
     AlterThread* workerThread = nullptr;
     StashThread* stashThread = nullptr;
+    TujinThread* tujinThread=nullptr;
 };
 
 

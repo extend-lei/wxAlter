@@ -45,6 +45,10 @@ add_executable(wxdemo1 WIN32 main.cpp ${RESOURCES}
         WinTool.h
         ItemFliter.cpp
         ItemFliter.h
+        PoeWork.cpp
+        PoeWork.h
+        TujinThread.cpp
+        TujinThread.h
 )
 
 # 链接 wxWidgets 库
